@@ -18,24 +18,24 @@ site within each cell group.
 ├── requirements.txt
 ├── .gitignore
 ├── src/
-│   ├── P0_data_paepare.py
-│   ├── P1_make_long_and_labels.py
-│   ├── P1b_export_long_cont_signal.py
-│   ├── P2_seq_to_fasta.py
-│   ├── P2a_static_seq_features.py
-│   ├── P2b_map_site_to_gene.py
-│   ├── P2c_static_tf_features.py
-│   ├── P3a_dynamic_site_mC.py
-│   ├── P3b_dynamic_promoter_mC.py
+│   ├── P0_data_prepare.py
+│   ├── P1_build_long_table_and_labels.py
+│   ├── P1b_export_continuous_signal.py
+│   ├── P2_extract_cpg_sequences.py
+│   ├── P2a_build_sequence_features.py
+│   ├── P2b_build_genomic_context.py
+│   ├── P2c_build_motif_features.py
+│   ├── P3a_build_site_5mc_features.py
+│   ├── P3b_build_promoter_5mc_features.py
 │   ├── P4_build_stage1_dataset.py
 │   ├── P4_build_stage2_dataset.py
-│   ├── P5_train_stage1_tree_global_v2.py
-│   ├── P5_make_stage1_oof_scores_enhanced.py
-│   ├── P5_train_stage2_tree_refine_v2_enhanced.py
-│   ├── P5_train_direction_style_baseline_enhanced.py
-│   ├── P6_train_deep5hmc_like_comparator.py
-│   ├── P6_eval_5hmc2stage_same_split_region.py
-│   └── make_per_cell_performance.py
+│   ├── P5_train_stage1.py
+│   ├── P5_generate_stage1_oof_scores.py
+│   ├── P5_train_stage2.py
+│   ├── P5_train_matched_baselines.py
+│   ├── P6_train_deep5hmc_inspired_comparator.py
+│   ├── P6_evaluate_regional_comparison.py
+│   └── summarize_cell_group_performance.py
 ├── examples/
 │   ├── stage1_input_example.csv
 │   └── stage2_input_example.csv
@@ -94,9 +94,9 @@ Install the required packages:
 python -m pip install -r requirements.txt
 ```
 
-The main manuscript models use CatBoost 1.2.8 for Stage 1 and LightGBM
-4.6.0 for Stage 2. PyTorch is required for the Deep5hmC-inspired
-regional comparator.
+The primary manuscript models use CatBoost 1.2.8 for Stage 1 and
+LightGBM 4.6.0 for Stage 2. PyTorch is required for the
+Deep5hmC-inspired regional comparator.
 
 ## Workflow
 
@@ -105,25 +105,23 @@ The scripts are organized in execution order.
 ### Data preparation and label construction
 
 ```text
-P0_data_paepare.py
-P1_make_long_and_labels.py
-P1b_export_long_cont_signal.py
+P0_data_prepare.py
+P1_build_long_table_and_labels.py
+P1b_export_continuous_signal.py
 ```
 
 These scripts prepare cell-group-level 5mC/5hmC tables, construct
-cell-group-specific labels and export continuous signals. Some
-preprocessing settings are dataset specific and should be checked before
-execution.
+cell-group-specific labels and export continuous signals.
 
 ### Feature construction
 
 ```text
-P2_seq_to_fasta.py
-P2a_static_seq_features.py
-P2b_map_site_to_gene.py
-P2c_static_tf_features.py
-P3a_dynamic_site_mC.py
-P3b_dynamic_promoter_mC.py
+P2_extract_cpg_sequences.py
+P2a_build_sequence_features.py
+P2b_build_genomic_context.py
+P2c_build_motif_features.py
+P3a_build_site_5mc_features.py
+P3b_build_promoter_5mc_features.py
 ```
 
 These scripts generate CpG-centered sequence features, genomic-context
@@ -142,8 +140,8 @@ These scripts construct the final Stage-1 and Stage-2 input tables.
 ### Stage 1 and out-of-fold Propensity Scores
 
 ```text
-P5_train_stage1_tree_global_v2.py
-P5_make_stage1_oof_scores_enhanced.py
+P5_train_stage1.py
+P5_generate_stage1_oof_scores.py
 ```
 
 The manuscript uses CatBoost as the primary Stage-1 learner. Genomic
@@ -154,7 +152,7 @@ prediction.
 ### Stage 2
 
 ```text
-P5_train_stage2_tree_refine_v2_enhanced.py
+P5_train_stage2.py
 ```
 
 Stage 2 integrates the Propensity Score with site-level 5mC,
@@ -164,9 +162,9 @@ information.
 ### Matched baselines and regional comparison
 
 ```text
-P5_train_direction_style_baseline_enhanced.py
-P6_train_deep5hmc_like_comparator.py
-P6_eval_5hmc2stage_same_split_region.py
+P5_train_matched_baselines.py
+P6_train_deep5hmc_inspired_comparator.py
+P6_evaluate_regional_comparison.py
 ```
 
 These scripts reproduce the matched one-stage baseline comparison and
@@ -176,19 +174,19 @@ Run any script with `--help` to inspect its available arguments, for
 example:
 
 ```bash
-python src/P5_train_stage1_tree_global_v2.py --help
+python src/P5_train_stage1.py --help
 ```
 
 ## Example
 
 The `examples/` directory contains small subsets of the Brain input
-tables. They demonstrate the expected file format and execution process
-and are not intended to reproduce the manuscript performance.
+tables. These files demonstrate the expected input format and execution
+process and are not intended to reproduce the manuscript performance.
 
 Generate example block-level out-of-fold Propensity Scores with:
 
 ```bash
-python src/P5_make_stage1_oof_scores_enhanced.py --stage1_csv examples/stage1_input_example.csv --score_csv examples/stage1_input_example.csv --out_csv examples/stage1_oof_scores_example.csv --out_dir examples/oof_output --models cat --score_output cat --folds 5 --seed 42 --block_bp 10000
+python src/P5_generate_stage1_oof_scores.py --stage1_csv examples/stage1_input_example.csv --score_csv examples/stage1_input_example.csv --out_csv examples/stage1_oof_scores_example.csv --out_dir examples/oof_output --models cat --score_output cat --folds 5 --seed 42 --block_bp 10000
 ```
 
 The command generates:
